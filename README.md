@@ -1,4 +1,4 @@
-# TheMovieDB.ID
+# TheTVDB.ID
 This agent is based on the original **TheTVDB** plugin. For the improvement of the code, thanks go to [Reyter](https://github.com/ReyterAK).
 
 The main differences from the original version:
