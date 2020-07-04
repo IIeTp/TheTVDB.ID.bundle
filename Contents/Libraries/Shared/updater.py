@@ -22,7 +22,7 @@ class Updater(object):
         self.stable_url = 'https://api.github.com/repos/%s/TheTVDB.ID.bundle/releases/latest' % self._repo
         self.beta_url = 'https://api.github.com/repos/%s/TheTVDB.ID.bundle/git/refs/heads/beta' % self._repo
 
-        self.archive_url = 'https://github.com/%s/TheMovieDB.ID.bundle/archive/%s.zip'
+        self.archive_url = 'https://github.com/%s/TheTVDB.ID.bundle/archive/%s.zip'
 
     @classmethod
     def auto_update_thread(cls, core):
