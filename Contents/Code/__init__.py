@@ -1,11 +1,12 @@
 import re, time, unicodedata, hashlib, types
 from collections import defaultdict
-
+from updater import Updater
 from utils import *
 
 FileBotMod = filebot_is(Prefs['xattr_id'])
 if FileBotMod != False:
   from filebot import *
+  Log('FileBot Xattr is founded')
   FileBot = True
 else:
   FileBot = False
@@ -210,6 +211,11 @@ def GetResultFromNetwork(url, fetchContent=True, additionalHeaders=None, data=No
 
 def Start():
   HTTP.CacheTime = CACHE_1WEEK
+  if Prefs['auto_update'] == True:
+    Thread.CreateTimer(3600, Updater.auto_update_thread, core=Core)
+
+def ValidatePrefs():
+  Log('ValidatePrefs function call')
 
 
 def metadata_people(people_list, meta_people_obj):
@@ -473,11 +479,13 @@ class id_TVDBAgent(Agent.TV_Shows):
       break
     if file:
       attr = xattr_metadata(file) if FileBot == True else None
-      sid = series_id(attr) if attr is not None else None
-      if sid is None:
-        sid = ''
+      if attr is not None:
+        if attr_get(attr, '@type') == 'MultiEpisode':
+          attr = (attr_get(attr, 'episodes'))[0]
+        sid = series_id(attr)
+        Log('Found Series ID in FileBot XATTR Metadata:\"' + sid + '\"') 
       else:
-        Log('Found Series ID in FileBot XATTR Metadata:\"' + sid + '\"')
+        sid = ''
       search_string = xstr(sid) + ' ' + xstr(media.show) + ' ' + file
       idtvdb = find_id(r'(?<=tvdb)(\d+)|(?<=tvdb-)(\d+)|(?<=tvdb )(\d+)|(?<=tvdb2-)(\d+)|(?<=tvdb2 )(\d+)|(?<=tvdb_)(\d+)', search_string)
       if idtvdb is not None:

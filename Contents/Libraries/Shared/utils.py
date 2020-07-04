@@ -7,10 +7,8 @@ def import_ext_module(mod_path, mod_name):
     module_path = os.path.realpath(os.path.join(mod_path))
     sys.path.append(module_path)
     my_mod = importlib.import_module(mod_name[:(len(mod_name)-3)])
-    Log('Imported ' + str(my_mod))
     return my_mod
   else:
-    Log('EXT Module \'' + mod_name + '\' NOT found!!!')  
     return False
 
 def filebot_is(prefs_is):
