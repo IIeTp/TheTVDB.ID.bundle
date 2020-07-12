@@ -3,14 +3,14 @@ from collections import defaultdict
 from updater import Updater
 from utils import *
 
-FileBotMod = filebot_is(Prefs['xattr_id'])
-if FileBotMod != False:
+if module_add_syspath('../../../Scanners/Common/', 'filebot.py') == True:
   from filebot import *
   Log('FileBot Xattr is founded')
   FileBot = True
 else:
   FileBot = False
 
+THEME_URL = 'https://tvthemes.plexapp.com/%s.mp3'
 TVDB_API_KEY = 'D4DDDAEFAD083E6F'
 META_HOST = 'https://meta.plex.tv'
 
@@ -478,8 +478,9 @@ class id_TVDBAgent(Agent.TV_Shows):
        file = media.seasons[s].episodes[e].items[0].parts[0].file ; break
       break
     if file:
-      attr = xattr_metadata(file) if FileBot == True else None
+      attr = xattr_metadata(file) if FileBot == True and Prefs['xattr_id'] == True else None
       if attr is not None:
+        Log('Trying to use FileBot XATTR Metadata')
         if attr_get(attr, '@type') == 'MultiEpisode':
           attr = (attr_get(attr, 'episodes'))[0]
         sid = series_id(attr)
@@ -879,6 +880,7 @@ class id_TVDBAgent(Agent.TV_Shows):
 
     tvdb_series_data = defaultdict(lambda: '')
     tvdb_series_orig_data = dict()
+
     try:
       tvdb_series_orig_data = JSON.ObjectFromString(GetResultFromNetwork(TVDB_SERIES_URL % (metadata.id, lang), additionalHeaders={'Accept-Language': lang}, cacheTime=0 if force else CACHE_1WEEK))
       tvdb_series_data.update(tvdb_series_orig_data['data'])
@@ -931,6 +933,11 @@ class id_TVDBAgent(Agent.TV_Shows):
     metadata.summary = tvdb_series_data['overview'] or tvdb_english_series_data['overview']
     metadata.content_rating = tvdb_series_data['rating']
     metadata.studio = tvdb_series_data['network']
+    if Prefs['theme_music'] == True and metadata.id is not None:
+      Log('Trying to load from PlexThemeMusic')
+      try:
+        metadata.themes[THEME_URL % metadata.id] = Proxy.Media(HTTP.Request(THEME_URL % metadata.id))
+      except: pass
 
     # Convenience Function
     parse_date = lambda s: Datetime.ParseDate(s).date()
