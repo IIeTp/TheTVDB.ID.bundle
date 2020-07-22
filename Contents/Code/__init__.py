@@ -2,15 +2,25 @@ import re, time, unicodedata, hashlib, types
 from collections import defaultdict
 from updater import Updater
 from utils import *
+import agents_supp
 
-if module_add_syspath('../../../Scanners/Common/', 'filebot.py') == True:
+Log.Info("The Movie Database.ID Agent - CPU: {}, OS: {}".format(Platform.CPU, Platform.OS))
+PLEXBINPATH = plexpathbin(re)
+PLEXPLUGINS = PLEXBINPATH + '\\Resources\\' + plexporiginpluginspath(PLEXBINPATH)
+PLEXHOME = Core.app_support_path
+Log.Info ("Plex binaries path: " +  PLEXBINPATH)
+Log.Info ("Plex agents path: " +  PLEXPLUGINS)
+Log.Info ("Plex Home path: " +  PLEXHOME)
+
+agents_supp.check_agent(PLEXPLUGINS, PLEXHOME)
+
+if module_add_syspath('%s/Scanners/Common/' % PLEXHOME, 'filebot.py') == True:
   from filebot import *
-  Log('FileBot Xattr is founded')
+  Log('FileBot Xattr is found')
   FileBot = True
 else:
   FileBot = False
 
-THEME_URL = 'https://tvthemes.plexapp.com/%s.mp3'
 TVDB_API_KEY = 'D4DDDAEFAD083E6F'
 META_HOST = 'https://meta.plex.tv'
 
@@ -38,6 +48,7 @@ TMDB_CONFIG = '/configuration'
 TMDB_TV = '/tv/%s?append_to_response=credits,content_ratings&language=%s'
 TMDB_TV_EXTERNAL_IDS = '/tv/%s/external_ids'
 TMDB_TV_IMDB = '/find/%s?external_source=imdb_id'
+TMDB_TV_TVDB = '/find/%s?external_source=tvdb_id'
 
 GOOGLE_JSON_TVDB = 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=large&q=%s+"thetvdb.com"+series+%s'
 GOOGLE_JSON_TVDB_TITLE = 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=large&q=%s+"thetvdb.com"+series+info+%s'
@@ -933,11 +944,6 @@ class id_TVDBAgent(Agent.TV_Shows):
     metadata.summary = tvdb_series_data['overview'] or tvdb_english_series_data['overview']
     metadata.content_rating = tvdb_series_data['rating']
     metadata.studio = tvdb_series_data['network']
-    if Prefs['theme_music'] == True and metadata.id is not None:
-      Log('Trying to load from PlexThemeMusic')
-      try:
-        metadata.themes[THEME_URL % metadata.id] = Proxy.Media(HTTP.Request(THEME_URL % metadata.id))
-      except: pass
 
     # Convenience Function
     parse_date = lambda s: Datetime.ParseDate(s).date()

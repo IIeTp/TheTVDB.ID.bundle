@@ -1,13 +1,13 @@
 [
   {
-    "id":"xattr_id",
-    "label":"Prefer FileBot Xattr Metadata for matching, if present",
+    "id":"auto_update",
+    "label":"Auto update plugin",
     "type":"bool",
     "default":"true"
   },
   {
-    "id":"theme_music",
-    "label":"Plex Theme Music support",
+    "id":"xattr_id",
+    "label":"Prefer FileBot Xattr Metadata for matching, if present",
     "type":"bool",
     "default":"true"
   },
@@ -22,11 +22,5 @@
     "label": "Include extras with subtitles in Library language",
     "type": "bool",
     "default": "false"
-  },
-  {
-    "id":"auto_update",
-    "label":"Auto update plugin",
-    "type":"bool",
-    "default":"true"
-  } 
+  }
 ]
