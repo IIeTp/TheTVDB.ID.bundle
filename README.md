@@ -5,6 +5,11 @@ The main differences from the original version:
 - Added the ability to use the ID from TV show, instead of the name or in addition to it.
 - Added the ability to use ID from [FileBot Xattr Metadata](https://github.com/filebot/plex-agents), for support, installation of this plugin is required.
 
+Added support for the following third party plugins:
+- Fanart.tv
+- OpenSubtitles.org
+- Plex Theme Music
+
 ## Examples
 [Arrow](https://thetvdb.com/series/arrow) tvdb-ID = 257655
 It does not matter what the name of the file is, if tvdb-ID is specified in the filepath, then the information will be bound to the ID.
