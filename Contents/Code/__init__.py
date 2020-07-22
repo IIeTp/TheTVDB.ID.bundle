@@ -221,7 +221,6 @@ def GetResultFromNetwork(url, fetchContent=True, additionalHeaders=None, data=No
 
 
 def Start():
-  HTTP.CacheTime = CACHE_1WEEK
   if Prefs['auto_update'] == True:
     Thread.CreateTimer(3600, Updater.auto_update_thread, core=Core)
 
