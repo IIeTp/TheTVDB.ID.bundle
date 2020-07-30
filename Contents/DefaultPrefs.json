@@ -12,6 +12,12 @@
     "default":"true"
   },
   {
+    "id":"theme_music",
+    "label":"Plex Theme Music support",
+    "type":"bool",
+    "default":"true"
+  },
+  {
     "id":"extras",
     "label":"Find trailers and extras automatically (Plex Pass required)",
     "type":"bool",

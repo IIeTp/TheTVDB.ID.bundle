@@ -1,13 +1,13 @@
 import re, time, unicodedata, hashlib, types
 from collections import defaultdict
+import agents_supp
 from updater import Updater
 from utils import *
-import agents_supp
 
 Log.Info("The Movie Database.ID Agent - CPU: {}, OS: {}".format(Platform.CPU, Platform.OS))
-PLEXBINPATH = plexpathbin(re)
-PLEXPLUGINS = PLEXBINPATH + '\\Resources\\' + plexporiginpluginspath(PLEXBINPATH)
-PLEXHOME = Core.app_support_path
+PLEXHOME = os.path.abspath(os.path.join(Core.app_support_path))
+PLEXPLUGINS = (os.path.split(os.path.split(os.path.split(os.path.split(os.path.split(Core.framework_path)[0])[0])[0])[0])[0])
+PLEXBINPATH = os.path.split(os.path.split(PLEXPLUGINS)[0])[0]
 Log.Info ("Plex binaries path: " +  PLEXBINPATH)
 Log.Info ("Plex agents path: " +  PLEXPLUGINS)
 Log.Info ("Plex Home path: " +  PLEXHOME)
@@ -21,6 +21,7 @@ if module_add_syspath('%s/Scanners/Common/' % PLEXHOME, 'filebot.py') == True:
 else:
   FileBot = False
 
+THEME_URL = 'https://tvthemes.plexapp.com/%s.mp3'
 TVDB_API_KEY = 'D4DDDAEFAD083E6F'
 META_HOST = 'https://meta.plex.tv'
 
@@ -48,7 +49,6 @@ TMDB_CONFIG = '/configuration'
 TMDB_TV = '/tv/%s?append_to_response=credits,content_ratings&language=%s'
 TMDB_TV_EXTERNAL_IDS = '/tv/%s/external_ids'
 TMDB_TV_IMDB = '/find/%s?external_source=imdb_id'
-TMDB_TV_TVDB = '/find/%s?external_source=tvdb_id'
 
 GOOGLE_JSON_TVDB = 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=large&q=%s+"thetvdb.com"+series+%s'
 GOOGLE_JSON_TVDB_TITLE = 'https://ajax.googleapis.com/ajax/services/search/web?v=1.0&rsz=large&q=%s+"thetvdb.com"+series+info+%s'
@@ -158,7 +158,7 @@ UMP_MATCH_URL = 'type=2&title=%s&year=%s&lang=%s&manual=%s'
 
 HEADERS = {'User-agent': 'Plex/Nine'}
 
-def GetTMDBJSON(url, cache_time=CACHE_1MONTH):
+def GetTMDBJSON(url, cache_time=CACHE_1DAY):
 
   tmdb_dict = None
 
@@ -181,7 +181,7 @@ def setJWT():
     HEADERS['Authorization'] = 'Bearer %s' % jwtResp['token']
 
 
-def GetResultFromNetwork(url, fetchContent=True, additionalHeaders=None, data=None, cacheTime=CACHE_1WEEK):
+def GetResultFromNetwork(url, fetchContent=True, additionalHeaders=None, data=None, cacheTime=CACHE_1DAY):
 
     if additionalHeaders is None:
       additionalHeaders = dict()
@@ -221,6 +221,7 @@ def GetResultFromNetwork(url, fetchContent=True, additionalHeaders=None, data=No
 
 
 def Start():
+  HTTP.CacheTime = 0
   if Prefs['auto_update'] == True:
     Thread.CreateTimer(3600, Updater.auto_update_thread, core=Core)
 
@@ -892,7 +893,7 @@ class id_TVDBAgent(Agent.TV_Shows):
     tvdb_series_orig_data = dict()
 
     try:
-      tvdb_series_orig_data = JSON.ObjectFromString(GetResultFromNetwork(TVDB_SERIES_URL % (metadata.id, lang), additionalHeaders={'Accept-Language': lang}, cacheTime=0 if force else CACHE_1WEEK))
+      tvdb_series_orig_data = JSON.ObjectFromString(GetResultFromNetwork(TVDB_SERIES_URL % (metadata.id, lang), additionalHeaders={'Accept-Language': lang}, cacheTime=0 if force else CACHE_1DAY))
       tvdb_series_data.update(tvdb_series_orig_data['data'])
     except:
       Log("Bad series data, no update for TVDB id: %s (lang: %s)" % (metadata.id, lang))
@@ -903,11 +904,11 @@ class id_TVDBAgent(Agent.TV_Shows):
     try:
       TMDB_BASE_URL = 'http://127.0.0.1:32400/services/tmdb?uri=%s'
       url = '/find/' + metadata.id + '?external_source=tvdb_id'
-      tmdb_dict = JSON.ObjectFromURL(TMDB_BASE_URL % String.Quote(url, True), sleep=2.0, headers={'Accept': 'application/json'}, cacheTime=0 if force else CACHE_1MONTH)
+      tmdb_dict = JSON.ObjectFromURL(TMDB_BASE_URL % String.Quote(url, True), sleep=2.0, headers={'Accept': 'application/json'}, cacheTime=0 if force else CACHE_1DAY)
       tmdb_id = tmdb_dict['tv_results'][0]['id']
       
       url = '/tv/%s/recommendations' % tmdb_id
-      tmdb_dict = JSON.ObjectFromURL(TMDB_BASE_URL % String.Quote(url, True), sleep=2.0, headers={'Accept': 'application/json'}, cacheTime=0 if force else CACHE_1MONTH)
+      tmdb_dict = JSON.ObjectFromURL(TMDB_BASE_URL % String.Quote(url, True), sleep=2.0, headers={'Accept': 'application/json'}, cacheTime=0 if force else CACHE_1DAY)
 
       metadata.similar.clear()
       for rec in tmdb_dict['results']:
@@ -922,7 +923,7 @@ class id_TVDBAgent(Agent.TV_Shows):
         tvdb_english_series_data.update(JSON.ObjectFromString(
           GetResultFromNetwork(TVDB_SERIES_URL % (metadata.id, 'en'),
             additionalHeaders={'Accept-Language': 'en'},
-            cacheTime=0 if force else CACHE_1WEEK)
+            cacheTime=0 if force else CACHE_1DAY)
           )['data']
         )
     except KeyError, e:
@@ -935,7 +936,7 @@ class id_TVDBAgent(Agent.TV_Shows):
 
     actor_data = None
     try:
-      actor_data = JSON.ObjectFromString(GetResultFromNetwork(TVDB_ACTORS_URL % metadata.id, cacheTime=0 if force else CACHE_1WEEK))['data']
+      actor_data = JSON.ObjectFromString(GetResultFromNetwork(TVDB_ACTORS_URL % metadata.id, cacheTime=0 if force else CACHE_1DAY))['data']
     except Exception, e:
       Log("Bad actor data, no update for TVDB id: %s" % metadata.id)
 
@@ -943,6 +944,11 @@ class id_TVDBAgent(Agent.TV_Shows):
     metadata.summary = tvdb_series_data['overview'] or tvdb_english_series_data['overview']
     metadata.content_rating = tvdb_series_data['rating']
     metadata.studio = tvdb_series_data['network']
+    if Prefs['theme_music'] == True and metadata.id is not None:
+      Log('Trying to load from PlexThemeMusic')
+      try:
+        metadata.themes[THEME_URL % metadata.id] = Proxy.Media(HTTP.Request(THEME_URL % metadata.id))
+      except: pass
 
     # Convenience Function
     parse_date = lambda s: Datetime.ParseDate(s).date()
@@ -962,7 +968,7 @@ class id_TVDBAgent(Agent.TV_Shows):
       if len(ivaNormTitle) > 0:
         try:
           req = THETVDB_EXTRAS_URL % (metadata.id, ivaNormTitle.replace(' ', '+'), -1 if metadata.originally_available_at is None else metadata.originally_available_at.year)
-          series_extra_xml = XML.ElementFromURL(req, cacheTime=0 if force else CACHE_1WEEK)
+          series_extra_xml = XML.ElementFromURL(req, cacheTime=0 if force else CACHE_1DAY)
 
           self.processExtras(series_extra_xml, metadata, lang, ivaNormTitle)
 
@@ -1048,7 +1054,7 @@ class id_TVDBAgent(Agent.TV_Shows):
           tvdb_episode_details = defaultdict(lambda: '')
           tvdb_episode_orig_details = dict()
           try:
-            tvdb_episode_orig_details = JSON.ObjectFromString(GetResultFromNetwork(TVDB_EPISODE_DETAILS_URL % (episode_id, lang), additionalHeaders={'Accept-Language': lang}, cacheTime=0 if force else CACHE_1WEEK))
+            tvdb_episode_orig_details = JSON.ObjectFromString(GetResultFromNetwork(TVDB_EPISODE_DETAILS_URL % (episode_id, lang), additionalHeaders={'Accept-Language': lang}, cacheTime=0 if force else CACHE_1DAY))
             tvdb_episode_details.update(tvdb_episode_orig_details['data'])
           except:
             Log("Bad episode data, no update for TVDB id: %s (lang: %s)" % (episode_id, lang))
@@ -1062,7 +1068,7 @@ class id_TVDBAgent(Agent.TV_Shows):
               tvdb_english_episode_details.update(JSON.ObjectFromString(
                 GetResultFromNetwork(TVDB_EPISODE_DETAILS_URL % (episode_id, 'en'),
                   additionalHeaders={'Accept-Language': 'en'},
-                  cacheTime=0 if force else CACHE_1WEEK)
+                  cacheTime=0 if force else CACHE_1DAY)
                 )['data']
               )
           except KeyError, e:
@@ -1105,7 +1111,7 @@ class id_TVDBAgent(Agent.TV_Shows):
             thumb_file = tvdb_episode_details.get('filename')
             if thumb_file is not None and len(thumb_file) > 0:
               thumb_url = TVDB_IMG_ROOT % thumb_file
-              thumb_data = GetResultFromNetwork(thumb_url, False, cacheTime=0 if force else CACHE_1WEEK)
+              thumb_data = GetResultFromNetwork(thumb_url, False, cacheTime=0 if force else CACHE_1DAY)
 
               # Check that the thumb doesn't already exist before downloading it
               valid_names.append(thumb_url)
@@ -1214,7 +1220,7 @@ class id_TVDBAgent(Agent.TV_Shows):
           elif len(ivaNormTitle) > 0 and metadata.id is not None and metadata.id is not "":
             req = THETVDB_EXTRAS_URL % (metadata.id, ivaNormTitle.replace(' ', '+'), -1 if metadata.originally_available_at is None else metadata.originally_available_at.year)
             req = req + '/' + str(season_num)
-            xml = XML.ElementFromURL(req, cacheTime=0 if force else CACHE_1WEEK)
+            xml = XML.ElementFromURL(req, cacheTime=0 if force else CACHE_1DAY)
             self.processExtras(xml, metadata.seasons[season_num], lang, ivaNormTitle)
 
         except Ex.HTTPError, e:
